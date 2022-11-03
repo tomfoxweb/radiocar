@@ -16,6 +16,10 @@ export class AppComponent implements AfterViewInit {
   title = 'radiocar';
   private car!: Car;
   private initializationComplete = false;
+  private touchStartX = 0;
+  private touchStartY = 0;
+  private touchEndX = 0;
+  private touchEndY = 0;
 
   @ViewChild('canvasGame') canvasGame!: ElementRef<HTMLCanvasElement>;
 
@@ -44,6 +48,67 @@ export class AppComponent implements AfterViewInit {
   handleArrowLeft(event: KeyboardEvent) {
     if (this.initializationComplete && this.car) {
       this.car.left();
+    }
+  }
+
+  @HostListener('window:pointerdown', ['$event'])
+  handlePointerDown(event: PointerEvent) {
+    this.setStartTouchPosition(event.clientX, event.clientY);
+  }
+
+  @HostListener('window:pointerup', ['$event'])
+  handlePointerUp(event: PointerEvent) {
+    this.setEndTouchPosition(event.clientX, event.clientY);
+    this.processPointerMove();
+  }
+
+  @HostListener('window:touchstart', ['$event'])
+  handleTouchDown(event: TouchEvent) {
+    if (event.changedTouches.length > 0) {
+      const x = event.changedTouches[0].clientX;
+      const y = event.changedTouches[0].clientY;
+      this.setStartTouchPosition(x, y);
+    }
+  }
+
+  @HostListener('window:touchend', ['$event'])
+  handleTouchEnd(event: TouchEvent) {
+    if (event.changedTouches.length > 0) {
+      const x = event.changedTouches[0].clientX;
+      const y = event.changedTouches[0].clientY;
+      this.setEndTouchPosition(x, y);
+      this.processPointerMove();
+    }
+  }
+
+  private setStartTouchPosition(x: number, y: number): void {
+    this.touchStartX = x;
+    this.touchStartY = y;
+  }
+
+  private setEndTouchPosition(x: number, y: number): void {
+    this.touchEndX = x;
+    this.touchEndY = y;
+  }
+
+  private processPointerMove(): void {
+    const sx = Math.abs(this.touchEndX - this.touchStartX);
+    const sy = Math.abs(this.touchEndY - this.touchStartY);
+    if (sx + sy < 50) {
+      return;
+    }
+    if (sx > sy) {
+      if (this.touchEndX > this.touchStartX) {
+        this.car.right();
+      } else {
+        this.car.left();
+      }
+    } else {
+      if (this.touchEndY > this.touchStartY) {
+        this.car.back();
+      } else {
+        this.car.forward();
+      }
     }
   }
 
