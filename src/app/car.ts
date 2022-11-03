@@ -20,63 +20,46 @@ export class Car {
   private angle: number;
   private x: number;
   private y: number;
+  private carImage: HTMLImageElement;
   private readonly acceleration = 1;
   private readonly rotationDelta = 45;
-  private imageSources: Map<Angle, string>;
-  private images: Map<Angle, HTMLImageElement>;
 
-  constructor(
-    mapWidth: number,
-    mapHeight: number,
-    carWidth: number,
-    carHeight: number
-  ) {
+  constructor(mapWidth: number, mapHeight: number, carImage: HTMLImageElement) {
     this.mapWidth = mapWidth;
     this.mapHeight = mapHeight;
-    this.carWidth = carWidth;
-    this.carHeight = carHeight;
-    this.imageSources = new Map<Angle, string>([
-      [0, 'assets/images/car0.png'],
-      [45, 'assets/images/car45.png'],
-      [90, 'assets/images/car90.png'],
-      [135, 'assets/images/car135.png'],
-      [180, 'assets/images/car180.png'],
-      [225, 'assets/images/car225.png'],
-      [270, 'assets/images/car270.png'],
-      [315, 'assets/images/car315.png'],
-    ]);
-    this.images = new Map();
-    this.speed = 0;
-    this.angle = 90;
+    this.carWidth = this.mapWidth / 10;
+    this.carHeight = this.carWidth / 2;
     this.x = this.mapWidth / 2 - this.carWidth / 2;
     this.y = this.mapHeight / 2 - this.carHeight / 2;
+    this.speed = 0;
+    this.angle = 90;
+    this.carImage = carImage;
   }
 
   setMapSize(mapWidth: number, mapHeight: number) {
     this.mapWidth = mapWidth;
     this.mapHeight = mapHeight;
+    this.carWidth = this.mapWidth / 10;
+    this.carHeight = this.carWidth / 2;
   }
 
-  async loadImages() {
-    this.images.clear();
-    const loadingPromises: Promise<MovementImage>[] = [];
-    this.imageSources.forEach((source, angle) => {
-      loadingPromises.push(this.loadImage({ source, angle }));
-    });
-    const loadedImages = await Promise.all(loadingPromises);
-    loadedImages.forEach((image) => {
-      this.images.set(image.angle, image.image);
-    });
-  }
-
-  private loadImage(source: MovementSource): Promise<MovementImage> {
-    return new Promise<MovementImage>((resolve) => {
-      const image = new Image();
-      image.src = source.source;
-      image.addEventListener('load', () => {
-        resolve({ angle: source.angle, image: image });
-      });
-    });
+  private calculateCarHitZone(): [number, number] {
+    let width = this.carWidth;
+    let height = this.carHeight;
+    switch (this.angle) {
+      case 45:
+      case 135:
+      case 225:
+      case 315:
+        height = width;
+        break;
+      case 90:
+      case 270:
+        width = this.carHeight;
+        height = this.carWidth;
+        break;
+    }
+    return [width, height];
   }
 
   restart() {
@@ -123,19 +106,19 @@ export class Car {
 
   draw(ctx: CanvasRenderingContext2D) {
     ctx.save();
-    const image = this.images.get(this.angle as Angle)!;
-    const w = image.width;
-    const h = image.height;
+    ctx.translate(this.x, this.y);
+    ctx.rotate(-(this.angle / 180.0) * Math.PI);
+    ctx.translate(-this.x, -this.y);
+    let w = this.carWidth;
+    let h = this.carHeight;
     const x = this.x - w / 2;
     const y = this.y - h / 2;
-    ctx.drawImage(image, x, y);
+    ctx.drawImage(this.carImage, x, y, this.carWidth, this.carHeight);
     ctx.restore();
   }
 
   hitWall(): boolean {
-    const image = this.images.get(this.angle as Angle)!;
-    const w = image.width;
-    const h = image.height;
+    const [w, h] = this.calculateCarHitZone();
     const x = this.x - w / 2;
     const y = this.y - h / 2;
     if (x < 0 || y < 0) {
@@ -145,6 +128,10 @@ export class Car {
       return true;
     }
     return false;
+  }
+
+  stop() {
+    this.speed = 0;
   }
 
   private calcMovementXY(): [MovementDelta, MovementDelta] {

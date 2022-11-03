@@ -6,6 +6,7 @@ import {
   ViewChild,
 } from '@angular/core';
 import { Car } from './car';
+import { ImageProviderService } from './image-provider.service';
 
 @Component({
   selector: 'app-root',
@@ -22,6 +23,7 @@ export class AppComponent implements AfterViewInit {
   private touchEndY = 0;
   private mapWidth = 0;
   private mapHeight = 0;
+  private carHasHitWall = false;
 
   @ViewChild('canvasGame') canvasGame!: ElementRef<HTMLCanvasElement>;
 
@@ -96,6 +98,8 @@ export class AppComponent implements AfterViewInit {
     this.mapHeight = canvasHeight;
   }
 
+  constructor(private imageProvider: ImageProviderService) {}
+
   private setStartTouchPosition(x: number, y: number): void {
     this.touchStartX = x;
     this.touchStartY = y;
@@ -127,7 +131,7 @@ export class AppComponent implements AfterViewInit {
     }
   }
 
-  ngAfterViewInit(): void {
+  async ngAfterViewInit() {
     const canvas = this.canvasGame.nativeElement;
     const ctx = canvas.getContext('2d');
     if (!ctx) {
@@ -138,22 +142,25 @@ export class AppComponent implements AfterViewInit {
     this.mapHeight = Number.parseInt(css.height);
     canvas.width = this.mapWidth;
     canvas.height = this.mapHeight;
-    const carWidth = 25;
-    const carHeight = 50;
-    this.car = new Car(this.mapWidth, this.mapHeight, carWidth, carHeight);
-    this.car.loadImages().then(() => {
-      window.setInterval(() => {
-        ctx.clearRect(0, 0, this.mapWidth, this.mapHeight);
-        this.car.move();
-        this.car.draw(ctx);
-        if (this.car.hitWall()) {
+    const carImage = await this.imageProvider.getCarImage();
+    this.car = new Car(this.mapWidth, this.mapHeight, carImage);
+    window.setInterval(() => {
+      ctx.clearRect(0, 0, this.mapWidth, this.mapHeight);
+      this.car.move();
+      this.car.draw(ctx);
+      if (this.car.hitWall()) {
+        if (!this.carHasHitWall) {
+          this.carHasHitWall = true;
+          this.car.stop();
+          this.car.draw(ctx);
           window.setTimeout(() => {
             alert('Game Over');
             this.car.restart();
-          });
+            this.carHasHitWall = false;
+          }, 100);
         }
-      }, 16);
-      this.initializationComplete = true;
-    });
+      }
+    }, 16);
+    this.initializationComplete = true;
   }
 }
