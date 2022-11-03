@@ -116,10 +116,8 @@ export class Car {
     ctx.translate(this.x, this.y);
     ctx.rotate(-(this.angle / 180.0) * Math.PI);
     ctx.translate(-this.x, -this.y);
-    let w = this.carWidth;
-    let h = this.carHeight;
-    const x = this.x - w / 2;
-    const y = this.y - h / 2;
+    const x = this.x - this.carWidth / 2;
+    const y = this.y - this.carHeight / 2;
     ctx.drawImage(this.carImage, x, y, this.carWidth, this.carHeight);
     ctx.restore();
   }
