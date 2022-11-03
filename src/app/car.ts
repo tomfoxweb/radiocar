@@ -27,7 +27,8 @@ export class Car {
   constructor(mapWidth: number, mapHeight: number, carImage: HTMLImageElement) {
     this.mapWidth = mapWidth;
     this.mapHeight = mapHeight;
-    this.carWidth = this.mapWidth / 10;
+    const minMapSize = Math.min(this.mapWidth, this.mapHeight);
+    this.carWidth = minMapSize / 10;
     this.carHeight = this.carWidth / 2;
     this.x = this.mapWidth / 2 - this.carWidth / 2;
     this.y = this.mapHeight / 2 - this.carHeight / 2;
@@ -39,7 +40,8 @@ export class Car {
   setMapSize(mapWidth: number, mapHeight: number) {
     this.mapWidth = mapWidth;
     this.mapHeight = mapHeight;
-    this.carWidth = this.mapWidth / 10;
+    const minMapSize = Math.min(this.mapWidth, this.mapHeight);
+    this.carWidth = minMapSize / 10;
     this.carHeight = this.carWidth / 2;
   }
 
@@ -100,8 +102,13 @@ export class Car {
 
   move() {
     const [movementX, movementY] = this.calcMovementXY();
-    this.x += this.speed * movementX;
-    this.y -= this.speed * movementY;
+    const a = this.angle;
+    let speed = this.speed;
+    if (a === 45 || a === 135 || a === 225 || a === 315) {
+      speed = this.speed * Math.SQRT1_2;
+    }
+    this.x += speed * movementX;
+    this.y -= speed * movementY;
   }
 
   draw(ctx: CanvasRenderingContext2D) {
