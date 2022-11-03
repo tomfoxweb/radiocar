@@ -30,8 +30,8 @@ export class Car {
     const minMapSize = Math.min(this.mapWidth, this.mapHeight);
     this.carWidth = minMapSize / 10;
     this.carHeight = this.carWidth / 2;
-    this.x = this.mapWidth / 2 - this.carWidth / 2;
-    this.y = this.mapHeight / 2 - this.carHeight / 2;
+    this.x = this.mapWidth / 2;
+    this.y = this.mapHeight / 2;
     this.speed = 0;
     this.angle = 90;
     this.carImage = carImage;
@@ -67,8 +67,8 @@ export class Car {
   restart() {
     this.speed = 0;
     this.angle = 90;
-    this.x = this.mapWidth / 2 - this.carWidth / 2;
-    this.y = this.mapHeight / 2 - this.carHeight / 2;
+    this.x = this.mapWidth / 2;
+    this.y = this.mapHeight / 2;
   }
 
   forward() {
