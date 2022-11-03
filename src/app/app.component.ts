@@ -94,7 +94,7 @@ export class AppComponent implements AfterViewInit {
   private processPointerMove(): void {
     const sx = Math.abs(this.touchEndX - this.touchStartX);
     const sy = Math.abs(this.touchEndY - this.touchStartY);
-    if (sx + sy < 50) {
+    if (sx + sy < 30) {
       return;
     }
     if (sx > sy) {
