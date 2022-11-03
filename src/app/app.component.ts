@@ -16,7 +16,6 @@ export class AppComponent implements AfterViewInit {
   title = 'radiocar';
   private car!: Car;
   private initializationComplete = false;
-  private intervalId = 0;
 
   @ViewChild('canvasGame') canvasGame!: ElementRef<HTMLCanvasElement>;
 
@@ -24,7 +23,6 @@ export class AppComponent implements AfterViewInit {
   handleArrowUp(event: KeyboardEvent) {
     if (this.initializationComplete && this.car) {
       this.car.forward();
-      console.log('up');
     }
   }
 
@@ -32,7 +30,6 @@ export class AppComponent implements AfterViewInit {
   handleArrowRight(event: KeyboardEvent) {
     if (this.initializationComplete && this.car) {
       this.car.right();
-      console.log('right');
     }
   }
 
@@ -40,7 +37,6 @@ export class AppComponent implements AfterViewInit {
   handleArrowDown(event: KeyboardEvent) {
     if (this.initializationComplete && this.car) {
       this.car.back();
-      console.log('down');
     }
   }
 
@@ -48,7 +44,6 @@ export class AppComponent implements AfterViewInit {
   handleArrowLeft(event: KeyboardEvent) {
     if (this.initializationComplete && this.car) {
       this.car.left();
-      console.log('left');
     }
   }
 
@@ -66,11 +61,19 @@ export class AppComponent implements AfterViewInit {
     const carWidth = 25;
     const carHeight = 50;
     this.car = new Car(mapWidth, mapHeight, carWidth, carHeight);
-    this.intervalId = window.setInterval(() => {
-      ctx.clearRect(0, 0, mapWidth, mapHeight);
-      this.car.move();
-      this.car.draw(ctx);
-    }, 100);
-    this.initializationComplete = true;
+    this.car.loadImages().then(() => {
+      window.setInterval(() => {
+        ctx.clearRect(0, 0, mapWidth, mapHeight);
+        this.car.move();
+        this.car.draw(ctx);
+        if (this.car.hitWall()) {
+          window.setTimeout(() => {
+            alert('Game Over');
+            this.car.restart();
+          });
+        }
+      }, 16);
+      this.initializationComplete = true;
+    });
   }
 }

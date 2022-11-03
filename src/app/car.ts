@@ -1,4 +1,15 @@
 type MovementDelta = -1 | 0 | 1;
+type Angle = 0 | 45 | 90 | 135 | 180 | 225 | 270 | 315;
+
+interface MovementSource {
+  angle: Angle;
+  source: string;
+}
+
+interface MovementImage {
+  angle: Angle;
+  image: HTMLImageElement;
+}
 
 export class Car {
   private mapWidth: number;
@@ -10,7 +21,9 @@ export class Car {
   private x: number;
   private y: number;
   private readonly acceleration = 1;
-  private readonly rotation = 45;
+  private readonly rotationDelta = 45;
+  private imageSources: Map<Angle, string>;
+  private images: Map<Angle, HTMLImageElement>;
 
   constructor(
     mapWidth: number,
@@ -22,6 +35,46 @@ export class Car {
     this.mapHeight = mapHeight;
     this.carWidth = carWidth;
     this.carHeight = carHeight;
+    this.imageSources = new Map<Angle, string>([
+      [0, 'assets/images/car0.png'],
+      [45, 'assets/images/car45.png'],
+      [90, 'assets/images/car90.png'],
+      [135, 'assets/images/car135.png'],
+      [180, 'assets/images/car180.png'],
+      [225, 'assets/images/car225.png'],
+      [270, 'assets/images/car270.png'],
+      [315, 'assets/images/car315.png'],
+    ]);
+    this.images = new Map();
+    this.speed = 0;
+    this.angle = 90;
+    this.x = this.mapWidth / 2 - this.carWidth / 2;
+    this.y = this.mapHeight / 2 - this.carHeight / 2;
+  }
+
+  async loadImages() {
+    this.images.clear();
+    const loadingPromises: Promise<MovementImage>[] = [];
+    this.imageSources.forEach((source, angle) => {
+      loadingPromises.push(this.loadImage({ source, angle }));
+    });
+    const loadedImages = await Promise.all(loadingPromises);
+    loadedImages.forEach((image) => {
+      this.images.set(image.angle, image.image);
+    });
+  }
+
+  private loadImage(source: MovementSource): Promise<MovementImage> {
+    return new Promise<MovementImage>((resolve) => {
+      const image = new Image();
+      image.src = source.source;
+      image.addEventListener('load', () => {
+        resolve({ angle: source.angle, image: image });
+      });
+    });
+  }
+
+  restart() {
     this.speed = 0;
     this.angle = 90;
     this.x = this.mapWidth / 2 - this.carWidth / 2;
@@ -37,11 +90,24 @@ export class Car {
   }
 
   left() {
-    this.angle += this.rotation;
+    this.rotate(this.rotationDelta);
   }
 
   right() {
-    this.angle -= this.rotation;
+    this.rotate(-this.rotationDelta);
+  }
+
+  private rotate(rotation: number) {
+    if (this.speed < 0) {
+      rotation = -rotation;
+    }
+    let angle = this.angle + rotation;
+    if (angle < 0) {
+      angle = 315;
+    } else if (angle >= 360) {
+      angle = 0;
+    }
+    this.angle = angle;
   }
 
   move() {
@@ -52,13 +118,28 @@ export class Car {
 
   draw(ctx: CanvasRenderingContext2D) {
     ctx.save();
-    ctx.fillStyle = 'green';
-    const x = this.x - this.carWidth / 2;
-    const y = this.y - this.carHeight / 2;
-    const w = this.carWidth;
-    const h = this.carHeight;
-    ctx.fillRect(x, y, w, h);
+    const image = this.images.get(this.angle as Angle)!;
+    const w = image.width;
+    const h = image.height;
+    const x = this.x - w / 2;
+    const y = this.y - h / 2;
+    ctx.drawImage(image, x, y);
     ctx.restore();
+  }
+
+  hitWall(): boolean {
+    const image = this.images.get(this.angle as Angle)!;
+    const w = image.width;
+    const h = image.height;
+    const x = this.x - w / 2;
+    const y = this.y - h / 2;
+    if (x < 0 || y < 0) {
+      return true;
+    }
+    if (x + w > this.mapWidth || y + h > this.mapHeight) {
+      return true;
+    }
+    return false;
   }
 
   private calcMovementXY(): [MovementDelta, MovementDelta] {
