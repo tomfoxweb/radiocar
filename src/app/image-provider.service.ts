@@ -4,12 +4,17 @@ import { Injectable } from '@angular/core';
   providedIn: 'root',
 })
 export class ImageProviderService {
-  private readonly carImageUrl = 'assets/images/car.svg';
+  private readonly carImagePngUrl = 'assets/images/car.png';
+  private readonly carImageSvgUrl = 'assets/images/car.svg';
 
   constructor() {}
 
-  getCarImage(): Promise<HTMLImageElement> {
-    return this.loadImage(this.carImageUrl);
+  async getCarImage(): Promise<HTMLImageElement> {
+    const svgImage = await this.loadImage(this.carImageSvgUrl);
+    if (svgImage.width > 0) {
+      return svgImage;
+    }
+    return this.loadImage(this.carImagePngUrl);
   }
 
   private loadImage(url: string): Promise<HTMLImageElement> {
