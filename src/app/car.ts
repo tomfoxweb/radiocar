@@ -52,6 +52,11 @@ export class Car {
     this.y = this.mapHeight / 2 - this.carHeight / 2;
   }
 
+  setMapSize(mapWidth: number, mapHeight: number) {
+    this.mapWidth = mapWidth;
+    this.mapHeight = mapHeight;
+  }
+
   async loadImages() {
     this.images.clear();
     const loadingPromises: Promise<MovementImage>[] = [];

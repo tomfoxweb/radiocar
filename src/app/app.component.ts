@@ -20,6 +20,8 @@ export class AppComponent implements AfterViewInit {
   private touchStartY = 0;
   private touchEndX = 0;
   private touchEndY = 0;
+  private mapWidth = 0;
+  private mapHeight = 0;
 
   @ViewChild('canvasGame') canvasGame!: ElementRef<HTMLCanvasElement>;
 
@@ -81,6 +83,19 @@ export class AppComponent implements AfterViewInit {
     }
   }
 
+  @HostListener('window:resize', ['$event'])
+  handleWindowResize(event: UIEvent) {
+    const canvas = this.canvasGame.nativeElement;
+    const css = window.getComputedStyle(canvas);
+    const canvasWidth = Number.parseInt(css.width);
+    const canvasHeight = Number.parseInt(css.height);
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
+    this.car.setMapSize(canvasWidth, canvasHeight);
+    this.mapWidth = canvasWidth;
+    this.mapHeight = canvasHeight;
+  }
+
   private setStartTouchPosition(x: number, y: number): void {
     this.touchStartX = x;
     this.touchStartY = y;
@@ -119,16 +134,16 @@ export class AppComponent implements AfterViewInit {
       throw new Error("Couldn't create rendering context");
     }
     const css = window.getComputedStyle(canvas);
-    canvas.width = Number.parseInt(css.width);
-    canvas.height = Number.parseInt(css.height);
-    const mapWidth = Number.parseInt(css.width);
-    const mapHeight = Number.parseInt(css.height);
+    this.mapWidth = Number.parseInt(css.width);
+    this.mapHeight = Number.parseInt(css.height);
+    canvas.width = this.mapWidth;
+    canvas.height = this.mapHeight;
     const carWidth = 25;
     const carHeight = 50;
-    this.car = new Car(mapWidth, mapHeight, carWidth, carHeight);
+    this.car = new Car(this.mapWidth, this.mapHeight, carWidth, carHeight);
     this.car.loadImages().then(() => {
       window.setInterval(() => {
-        ctx.clearRect(0, 0, mapWidth, mapHeight);
+        ctx.clearRect(0, 0, this.mapWidth, this.mapHeight);
         this.car.move();
         this.car.draw(ctx);
         if (this.car.hitWall()) {
